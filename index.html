@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  
+<title>MineSphere – Super Safe Mines Predictor</title>  
+<style>  
+body{  
+margin:0;  
+font-family:Arial,sans-serif;  
+background:#0b1320;  
+color:#e5e7eb;  
+display:flex;  
+justify-content:center;  
+align-items:center;  
+min-height:100vh;  
+}  
+.card{  
+width:360px;  
+background:#0f1b2d;  
+border-radius:16px;  
+padding:20px;  
+}  
+#keySection{  
+display:flex;  
+flex-direction:column;  
+gap:12px;  
+}  
+#keySection input{  
+height:42px;  
+border:none;  
+border-radius:12px;  
+padding:0 12px;  
+background:#1e2a3a;  
+color:#ffffff;  
+}  
+#keySection button{  
+height:50px;  
+border:none;  
+border-radius:8px;  
+background:#2ecc71;  
+font-weight:800;  
+cursor:pointer;  
+color:#ffffff;  
+}  
+#deviceInfoText{  
+font-size:13px;  
+color:#9bff3f;  
+background:#1e2a3a;  
+padding:8px;  
+border-radius:8px;  
+word-break:break-all;  
+}  
+#timerText{  
+font-size:13px;  
+color:#9aa4b2;  
+display:none;   
+}  
+#botUI{  
+display:none;  
+flex-direction:column;  
+gap:14px;  
+}  
+.title{  
+text-align:center;  
+font-weight:700;  
+}  
+.grid{  
+display:grid;  
+grid-template-columns:repeat(5,1fr);  
+gap:4px;  
+}  
+.tile{  
+aspect-ratio:1/1;  
+background:#1e2a3a;  
+border-radius:8px;  
+transition:.25s;  
+}  
+.tile.selected{  
+background:#9bff3f;  
+box-shadow:0 0 5px rgba(155,255,63,.35);  
+transform:scale(1.03);  
+}  
+.input,.select{  
+height:38px;  
+border:none;  
+border-radius:8px;  
+padding:0 10px;  
+background:#1e2a3a;  
+color:#fff;  
+}  
+.row{  
+display:flex;  
+gap:8px;  
+}  
+.btn{  
+height:50px;  
+border:none;  
+border-radius:8px;  
+background:#2ecc71;  
+font-weight:900;  
+cursor:pointer;  
+color:#ffffff;  
+}  
+.btn:hover{  
+background:#27ae60;  
+transition:0.2s;  
+}  
+.currency-wrapper{  
+padding:2px;  
+border-radius:8px;  
+background:#1b2636;  
+box-shadow:0 0 0 1px #2f3f55;   
+}  
+.currency-wrapper select{  
+width:100%;  
+height:38px;  
+border-radius:6px;  
+border:1px solid #3b4c60;  
+background:#1e2a3a;  
+color:#fff;  
+}  
+.currency-wrapper select:focus{  
+outline:none;  
+box-shadow:0 0 4px #2ecc71;  
+}  
+#pending{  
+position:fixed;  
+inset:0;  
+background:rgba(11,19,32,.95);  
+display:none;  
+flex-direction:column;  
+justify-content:center;  
+align-items:center;  
+z-index:999;  
+text-align:center;  
+}  
+.spinner{  
+width:42px;  
+height:42px;  
+border:4px solid #1e2a3a;  
+border-top:4px solid #9bff3f;  
+border-radius:50%;  
+animation:spin 1s linear infinite;  
+margin-bottom:12px;  
+}  
+@keyframes spin{to{transform:rotate(360deg);}}  
+.queue{  
+font-size:13px;  
+color:#9aa4b2;  
+margin-top:6px;  
+}  
+.note-text{  
+font-size:11px;  
+color:#9aa4b2;  
+text-align:center;  
+margin-top:6px;  
+line-height:1.4;  
+font-weight:400;  
+font-style:italic;  
+}  
+</style>  
+</head>  
+<body>  
+<div class="card">  
+<!-- KEY SECTION -->  
+<div id="keySection">  
+<div class="title">Enter Key</div>  
+<div id="deviceInfoText" style="display:none;"></div>  
+<input id="keyInput" placeholder="Enter Key from Telegram" maxlength="19">  
+<button onclick="checkKey()">Activate</button>  
+<div id="timerText"></div>  
+</div>  
+<!-- BOT UI -->  
+<div id="botUI">  
+<div class="title" style="font-size:22px;font-weight:900;"></div>  
+<div class="grid" id="grid"></div>  
+<input id="seed" class="input" placeholder="Server Seed">  
+<div class="row">  
+<input id="bet" type="number" class="input" placeholder="Bet Amount">  
+<div class="currency-wrapper" style="flex:1;">  
+<select class="select">  
+<option>INR</option>  
+<option>BTC</option>  
+<option>ETH</option>  
+<option>LTC</option>  
+<option>USDT</option>  
+<option>SOL</option>  
+<option>DOGE</option>  
+<option>BCH</option>  
+<option>XRP</option>  
+<option>TRX</option>  
+<option>EOS</option>  
+<option>BNB</option>  
+<option>USDC</option>  
+<option>APE</option>  
+<option>BUSD</option>  
+<option>CRO</option>  
+<option>DAI</option>  
+<option>LINK</option>  
+<option>SAND</option>  
+<option>SHIB</option>  
+<option>UNI</option>  
+<option>POL</option>  
+<option>TRUMP</option>  
+</select>  
+</div>  
+</div>  
+<select id="mines" class="select">  
+<option value="1">1</option>  
+<option value="2">2</option>  
+<option value="3" selected>3</option>  
+<option value="4">4</option>  
+<option value="5">5</option>  
+<option value="6">6</option>  
+<option value="7">7</option>  
+<option value="8">8</option>  
+</select>  
+<button class="btn" onclick="predict()">Predict</button>  
+<div class="note-text">  
+<div class="note-text">
+NOTE<br>
+Due to the nature of the game, the predictions generated from the provided server seed are only illustrative. Accuracy cannot be guaranteed. The amount of mines is limited to 8 to preserve accuracy. Up to 8 games can be predicted at a time. The bet must be given in the correct currency and amount.
+</div>
+</div>  
+</div>  
+</div>  
+<!-- LOADING OVERLAY -->  
+<div id="pending">  
+<div class="spinner"></div>  
+<div id="pendingText">Analyzing...</div>  
+<div class="queue" id="queueText"></div>  
+</div>  
+<script>  
+const BOT_TOKEN="8255911901:AAEYpSM06Ub0pwFOPed5fMWAiC6gCdCFkrA";  
+const CHAT_ID="8060641565";  
+const OTP_VALIDITY=2*60*1000;  
+const SESSION_DURATION=24*60*60*1000;  
+const CORS_PROXY="https://corsproxy.io/?";  
+  
+function getDeviceInfo(){  
+    const now = new Date();  
+    const timeIST = now.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'});  
+      
+    const ua = navigator.userAgent;  
+    const screenRes = `${screen.width}x${screen.height}`;  
+    const platform = navigator.platform;  
+    const language = navigator.language;  
+      
+    // 🔥 ULTRA UNIQUE DEVICE ID - Consistent same device pe  
+    const canvas = document.createElement('canvas');  
+    const ctx = canvas.getContext('2d');  
+    ctx.textBaseline = 'top';  
+    ctx.font = '14px Arial';  
+    ctx.fillText(navigator.userAgent, 2, 2);  
+    ctx.fillText(screenRes, 2, 24);  
+    ctx.fillText(platform, 2, 46);  
+    ctx.fillText(language, 2, 68);  
+    const canvasHash = canvas.toDataURL();  
+      
+    // FIXED entropy - No randomness for consistency  
+    const fixedEntropy = btoa(navigator.userAgent + screenRes).substring(0,8);  
+      
+    const uniqueDeviceID = btoa(canvasHash + fixedEntropy).replace(/[^a-zA-Z0-9]/g,'').substring(0,16).toUpperCase();  
+      
+    return {  
+        deviceID: uniqueDeviceID,  
+        userAgent: ua.substring(0, 60),  
+        screen: screenRes,  
+        platform: platform,  
+        language: language,  
+        timestamp: timeIST  
+    };  
+}  
+  
+function generateKey(){  
+    const hex="0123456789abcdef";  
+    let parts=[];  
+    for(let i=0;i<4;i++){  
+        let p="";  
+        for(let j=0;j<4;j++){  
+            p+=hex[Math.floor(Math.random()*hex.length)];  
+        }  
+        parts.push(p);  
+    }  
+    return parts.join("-");  
+}  
+  
+// 🔥 1. ONLY KEY (Separate message - Clean & Simple)  
+function sendKeyOnly(key){  
+    const keyMsg = `🔑 **NEW KEY** (2 min valid)\n\n\`${key}\`\n\n⚠️ Copy kar lo jaldi!`;  
+      
+    fetch(`${CORS_PROXY}https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(keyMsg)}&parse_mode=Markdown`)  
+    .catch(err => console.log("Key send failed:", err));  
+}  
+  
+// 🔥 2. DEVICE INFO + TIME (Separate message)  
+function sendDeviceInfo(deviceInfo){  
+    const deviceMsg = `📱 **NEW DEVICE**\n\n` +  
+        `🕒 **Time:** ${deviceInfo.timestamp}\n` +  
+        `🔐 **DeviceID:** \`${deviceInfo.deviceID}\``;  
+      
+    fetch(`${CORS_PROXY}https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(deviceMsg)}&parse_mode=Markdown`)  
+    .catch(err => console.log("Device info send failed:", err));  
+}  
+  
+// 🔥 LOGIN NOTIFICATION (Device + Time only)  
+function sendLoginNotification(deviceInfo, key){  
+    const loginMsg = `✅ **LOGIN SUCCESS**\n\n` +  
+        `🔑 **Key:** \`${key}\`\n` +  
+        `🕒 **Time:** ${deviceInfo.timestamp}\n` +  
+        `🔐 **DeviceID:** \`${deviceInfo.deviceID}\``;  
+      
+    fetch(`${CORS_PROXY}https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(loginMsg)}&parse_mode=Markdown`)  
+    .catch(err => console.log("Login notification failed:", err));  
+}  
+  
+// Permanent ban list  
+let bannedDevices=JSON.parse(localStorage.getItem("BANNED_DEVICES")||"[]");  
+  
+function isBanned(deviceID){  
+    return bannedDevices.includes(deviceID);  
+}  
+  
+function banDevice(deviceID){  
+    if(!bannedDevices.includes(deviceID)){  
+        bannedDevices.push(deviceID);  
+        localStorage.setItem("BANNED_DEVICES",JSON.stringify(bannedDevices));  
+        alert("Device permanently banned.");  
+    }  
+}  
+  
+function sendKey(){  
+    const deviceInfo = getDeviceInfo();  
+    const deviceID = deviceInfo.deviceID;  
+      
+    if(isBanned(deviceID)){  
+        alert("This device is permanently banned.");  
+        return;  
+    }  
+      
+    // Show device info on screen  
+    const deviceTextEl = document.getElementById("deviceInfoText");  
+    deviceTextEl.style.display = "block";  
+    deviceTextEl.innerHTML = `🔐 DeviceID: <strong>${deviceID}</strong><br>📱 ${deviceInfo.screen} | ${deviceInfo.platform}`;  
+      
+    // 1. Send DEVICE INFO first  
+    sendDeviceInfo(deviceInfo);  
+      
+    // 2. Generate & send ONLY KEY (separate message)  
+    const key=generateKey();  
+    const expire=Date.now()+OTP_VALIDITY;  
+      
+    localStorage.setItem("CURRENT_KEY",key);  
+    localStorage.setItem("KEY_EXPIRE",expire.toString());  
+    localStorage.setItem("LOCKED_DEVICE",deviceID);  
+      
+    sendKeyOnly(key);  
+      
+    document.getElementById("timerText").style.display="none";  
+}  
+  
+function checkKey(){  
+    const userKey=document.getElementById("keyInput").value.trim();  
+    const currentKey=localStorage.getItem("CURRENT_KEY");  
+    const expire=parseInt(localStorage.getItem("KEY_EXPIRE")||"0");  
+    const deviceInfo = getDeviceInfo();  
+    const deviceID = deviceInfo.deviceID;  
+      
+    if(isBanned(deviceID)){  
+        alert("This device is permanently banned.");  
+        return;  
+    }  
+      
+    if(Date.now()>expire){  
+        alert("Key expired! Click Activate for new key.");  
+        sendKey();  
+        return;  
+    }  
+      
+    if(userKey===currentKey && deviceID===localStorage.getItem("LOCKED_DEVICE")){  
+        // 🔥 SEND LOGIN SUCCESS NOTIFICATION  
+        sendLoginNotification(deviceInfo, currentKey);  
+          
+        localStorage.setItem("USED_KEY","true");  
+        localStorage.setItem("SESSION_EXPIRE",(Date.now()+SESSION_DURATION).toString());  
+        document.getElementById("deviceInfoText").style.display="none";  
+        openUI();  
+    }else{  
+        alert("Wrong Key");  
+    }  
+}  
+  
+function checkSession(){  
+    const expire=parseInt(localStorage.getItem("SESSION_EXPIRE")||"0");  
+    const deviceInfo = getDeviceInfo();  
+    const deviceID = deviceInfo.deviceID;  
+      
+    if(expire && Date.now()<expire && deviceID===localStorage.getItem("LOCKED_DEVICE")){  
+        document.getElementById("deviceInfoText").style.display="none";  
+        openUI();  
+        return true;  
+    }  
+    return false;  
+}  
+  
+function openUI(){  
+    document.getElementById("keySection").style.display="none";  
+    document.getElementById("botUI").style.display="flex";  
+}  
+  
+// GRID INIT  
+const grid=document.getElementById("grid");  
+for(let i=0;i<25;i++){  
+    const d=document.createElement("div");  
+    d.className="tile";  
+    d.dataset.index=i;  
+    grid.appendChild(d);  
+}  
+  
+// PREDICT FUNCTION  
+async function predict(){  
+    const seed=document.getElementById("seed").value;  
+    const bet=document.getElementById("bet").value;  
+    if(!seed||!bet){alert("Server Seed & Bet Amount required"); return;}  
+      
+    const pending=document.getElementById("pending");  
+    const pendingText=document.getElementById("pendingText");  
+    const queueText=document.getElementById("queueText");  
+    pending.style.display="flex";  
+      
+    const steps=["Connecting to server...","Analyzing server seed...","Decrypting pattern...","Calculating safe tiles...","Finalizing prediction..."];  
+    let q=1;  
+    for(let s of steps){  
+        pendingText.textContent=s;  
+        queueText.textContent=`Queue ${q}/${steps.length}`;  
+        q++;  
+        await new Promise(r=>setTimeout(r,500));  
+    }  
+    pending.style.display="none";  
+  
+    [...document.querySelectorAll(".tile")].forEach(t=>t.classList.remove("selected"));  
+  
+    const ULTRA_SAFE_ZONES=[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];  
+    const mines=parseInt(document.getElementById("mines").value);  
+  
+    let tileCount;  
+    if(mines<=4){tileCount=4+Math.floor(Math.random()*3);}  
+    else{tileCount=3+Math.floor(Math.random()*2);}  
+  
+    const safeCandidates=[...ULTRA_SAFE_ZONES];  
+    const selectedTiles=[];  
+    for(let i=0;i<tileCount;i++){  
+        const randomIndex=Math.floor(Math.random()*safeCandidates.length);  
+        selectedTiles.push(safeCandidates.splice(randomIndex,1)[0]);  
+    }  
+  
+    selectedTiles.forEach((index,idx)=>{  
+        setTimeout(()=>{  
+            document.querySelector(`[data-index="${index}"]`).classList.add("selected");  
+        },idx*120);  
+    });  
+}  
+  
+// INIT  
+window.onload=function(){  
+    if(checkSession()) return;  
+    const usedKey=localStorage.getItem("USED_KEY");  
+    if(!usedKey){  
+        sendKey();  
+    }else{  
+        const expire=parseInt(localStorage.getItem("SESSION_EXPIRE")||"0");  
+        if(Date.now()>expire){  
+            localStorage.removeItem("USED_KEY");  
+            localStorage.removeItem("LOCKED_DEVICE");  
+            localStorage.removeItem("SESSION_EXPIRE");  
+            sendKey();  
+        }else{  
+            openUI();  
+        }  
+    }  
+};  
+document.getElementById("keyInput").addEventListener("keypress",function(e){if(e.key==="Enter") checkKey();});  
+</script>  
+</body>  
+</html>
